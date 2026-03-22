@@ -86,18 +86,27 @@
 
   <!-- ═══ TAB 1: リボ払い ═══ -->
   <div class="tab-panel fade-in" id="panel-ribo">
-    <div class="company-select-wrap">
-      <div class="company-select-row">
-        <select class="company-select" data-field="company-category" onchange="filterCompanyDropdown(this)">
-          <option value="">-- カテゴリを選択 --</option>
-          <option value="consumer">消費者金融</option>
-          <option value="credit">クレジットカード</option>
-          <option value="bank">銀行カードローン</option>
-        </select>
-        <select class="company-select" data-field="company-name" onchange="selectCompanyFromDropdown(this)">
-          <option value="">-- 会社を選択 --</option>
-        </select>
+    <div class="company-selector">
+      <div class="company-selector-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16"/><path d="M3 21h18"/><path d="M9 7h1"/><path d="M9 11h1"/><path d="M9 15h1"/><path d="M14 7h1"/><path d="M14 11h1"/><path d="M14 15h1"/></svg>
+        金融機関から選ぶ
       </div>
+      <div class="company-selector-row">
+        <div class="custom-select-wrap">
+          <select class="custom-select" data-field="company-category" onchange="filterCompanyDropdown(this)">
+            <option value="">カテゴリ</option>
+            <option value="consumer">🏦 消費者金融</option>
+            <option value="credit">💳 クレジットカード</option>
+            <option value="bank">🏛️ 銀行カードローン</option>
+          </select>
+        </div>
+        <div class="custom-select-wrap">
+          <select class="custom-select" data-field="company-name" onchange="selectCompanyFromDropdown(this)">
+            <option value="">会社を選択</option>
+          </select>
+        </div>
+      </div>
+      <div class="selected-rate-display"></div>
     </div>
     <div class="company-search" style="position:relative">
       <div class="search-bar">
@@ -148,18 +157,27 @@
 
   <!-- ═══ TAB 2: 分割払い ═══ -->
   <div class="tab-panel" id="panel-installment" style="display:none">
-    <div class="company-select-wrap">
-      <div class="company-select-row">
-        <select class="company-select" data-field="company-category" onchange="filterCompanyDropdown(this)">
-          <option value="">-- カテゴリを選択 --</option>
-          <option value="consumer">消費者金融</option>
-          <option value="credit">クレジットカード</option>
-          <option value="bank">銀行カードローン</option>
-        </select>
-        <select class="company-select" data-field="company-name" onchange="selectCompanyFromDropdown(this)">
-          <option value="">-- 会社を選択 --</option>
-        </select>
+    <div class="company-selector">
+      <div class="company-selector-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16"/><path d="M3 21h18"/><path d="M9 7h1"/><path d="M9 11h1"/><path d="M9 15h1"/><path d="M14 7h1"/><path d="M14 11h1"/><path d="M14 15h1"/></svg>
+        金融機関から選ぶ
       </div>
+      <div class="company-selector-row">
+        <div class="custom-select-wrap">
+          <select class="custom-select" data-field="company-category" onchange="filterCompanyDropdown(this)">
+            <option value="">カテゴリ</option>
+            <option value="consumer">🏦 消費者金融</option>
+            <option value="credit">💳 クレジットカード</option>
+            <option value="bank">🏛️ 銀行カードローン</option>
+          </select>
+        </div>
+        <div class="custom-select-wrap">
+          <select class="custom-select" data-field="company-name" onchange="selectCompanyFromDropdown(this)">
+            <option value="">会社を選択</option>
+          </select>
+        </div>
+      </div>
+      <div class="selected-rate-display"></div>
     </div>
     <div class="company-search" style="position:relative">
       <div class="search-bar">
@@ -184,18 +202,27 @@
 
   <!-- ═══ TAB 3: リボ vs 分割 ═══ -->
   <div class="tab-panel" id="panel-compare" style="display:none">
-    <div class="company-select-wrap">
-      <div class="company-select-row">
-        <select class="company-select" data-field="company-category" onchange="filterCompanyDropdown(this)">
-          <option value="">-- カテゴリを選択 --</option>
-          <option value="consumer">消費者金融</option>
-          <option value="credit">クレジットカード</option>
-          <option value="bank">銀行カードローン</option>
-        </select>
-        <select class="company-select" data-field="company-name" onchange="selectCompanyFromDropdown(this)">
-          <option value="">-- 会社を選択 --</option>
-        </select>
+    <div class="company-selector">
+      <div class="company-selector-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16"/><path d="M3 21h18"/><path d="M9 7h1"/><path d="M9 11h1"/><path d="M9 15h1"/><path d="M14 7h1"/><path d="M14 11h1"/><path d="M14 15h1"/></svg>
+        金融機関から選ぶ
       </div>
+      <div class="company-selector-row">
+        <div class="custom-select-wrap">
+          <select class="custom-select" data-field="company-category" onchange="filterCompanyDropdown(this)">
+            <option value="">カテゴリ</option>
+            <option value="consumer">🏦 消費者金融</option>
+            <option value="credit">💳 クレジットカード</option>
+            <option value="bank">🏛️ 銀行カードローン</option>
+          </select>
+        </div>
+        <div class="custom-select-wrap">
+          <select class="custom-select" data-field="company-name" onchange="selectCompanyFromDropdown(this)">
+            <option value="">会社を選択</option>
+          </select>
+        </div>
+      </div>
+      <div class="selected-rate-display"></div>
     </div>
     <div class="company-search" style="position:relative">
       <div class="search-bar">

@@ -566,7 +566,12 @@ function filterCompanyDropdown(categorySelect) {
   if (!nameSelect) return;
 
   const category = categorySelect.value;
-  nameSelect.innerHTML = '<option value="">-- 会社を選択 --</option>';
+  nameSelect.innerHTML = '<option value="">会社を選択</option>';
+
+  // Clear rate badge
+  const selector = categorySelect.closest('.company-selector');
+  const display = selector ? selector.querySelector('.selected-rate-display') : null;
+  if (display) display.innerHTML = '';
 
   if (!category || !state.rates) return;
 
@@ -592,6 +597,15 @@ function selectCompanyFromDropdown(nameSelect) {
   const rateSlider = panel.querySelector('[data-slider="rate"]');
   if (rateInput) rateInput.value = rate;
   if (rateSlider) rateSlider.value = rate;
+
+  // Show rate badge
+  const selector = nameSelect.closest('.company-selector');
+  const display = selector ? selector.querySelector('.selected-rate-display') : null;
+  const companyName = nameSelect.options[nameSelect.selectedIndex].text.split('（')[0];
+  if (display) {
+    display.innerHTML = '<span class="selected-rate-badge">✓ ' + companyName + '　年率 <span class="rate-num">' + rate + '</span>%</span>';
+  }
+
   calculate();
 }
 
