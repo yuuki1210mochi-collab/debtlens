@@ -343,3 +343,36 @@ button { font-family: inherit; }
   .article h1 { font-size: 20px; }
   .cookie-banner, .disclaimer-banner { flex-direction: column; gap: 8px; text-align: center; }
 }
+
+/* ── Company Dropdown Select ── */
+.company-select-wrap {
+  margin-bottom: 12px;
+}
+.company-select-row {
+  display: flex; gap: 8px; margin-bottom: 8px;
+}
+.company-select {
+  flex: 1; padding: 10px 14px; border-radius: var(--radius-sm);
+  border: 1px solid var(--c-gray-200); background: var(--c-gray-50);
+  font-size: 14px; color: var(--c-gray-800); font-family: inherit;
+  outline: none; cursor: pointer; appearance: auto;
+}
+.company-select:focus { border-color: var(--c-green-500); }
+
+/* ── Larger Chart on PC ── */
+.chart-container canvas {
+  width: 100% !important;
+}
+@media (min-width: 768px) {
+  .chart-container canvas {
+    height: 360px !important;
+  }
+  .chart-container {
+    padding: 24px;
+  }
+}
+@media (max-width: 767px) {
+  .chart-container canvas {
+    height: 200px !important;
+  }
+}

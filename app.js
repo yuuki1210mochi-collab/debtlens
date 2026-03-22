@@ -558,3 +558,123 @@ function calcReversePay() {
   const el = document.getElementById('reverse-result');
   if (el) el.textContent = `必要な月額返済: ¥${pay.toLocaleString()}`;
 }
+
+// ── Company Dropdown Functions ──
+function filterCompanyDropdown(categorySelect) {
+  const panel = categorySelect.closest('.tab-panel') || document;
+  const nameSelect = panel.querySelector('[data-field="company-name"]');
+  if (!nameSelect) return;
+
+  const category = categorySelect.value;
+  nameSelect.innerHTML = '<option value="">-- 会社を選択 --</option>';
+
+  if (!category || !state.rates) return;
+
+  const cats = state.rates.categories;
+  const companies = cats[category] ? cats[category].companies : [];
+
+  companies.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.rate;
+    opt.textContent = `${c.name}（年率 ${c.rate}%）`;
+    nameSelect.appendChild(opt);
+  });
+}
+
+function selectCompanyFromDropdown(nameSelect) {
+  const rate = parseFloat(nameSelect.value);
+  if (isNaN(rate)) return;
+
+  const panel = nameSelect.closest('.tab-panel');
+  if (!panel) return;
+
+  const rateInput = panel.querySelector('[data-field="rate"]');
+  const rateSlider = panel.querySelector('[data-slider="rate"]');
+  if (rateInput) rateInput.value = rate;
+  if (rateSlider) rateSlider.value = rate;
+  calculate();
+}
+
+// ── Override chart height for PC ──
+(function() {
+  const origDraw = drawBalanceChart;
+  drawBalanceChart = function(canvasId, history) {
+    origDraw(canvasId, history);
+    // After drawing, apply responsive height
+    const canvas = document.getElementById(canvasId);
+    if (canvas && window.innerWidth >= 768) {
+      const w = canvas.parentElement.clientWidth - 48;
+      const h = 340;
+      canvas.width = w * 2;
+      canvas.height = h * 2;
+      canvas.style.width = w + 'px';
+      canvas.style.height = h + 'px';
+      // Redraw with new dimensions
+      const ctx = canvas.getContext('2d');
+      ctx.scale(2, 2);
+
+      const maxBal = history[0].balance;
+      const pad = { t: 16, r: 16, b: 36, l: 60 };
+      const cw = w - pad.l - pad.r;
+      const ch = h - pad.t - pad.b;
+
+      // Clear
+      ctx.clearRect(0, 0, w, h);
+
+      // Grid lines
+      ctx.strokeStyle = '#f0f0f0'; ctx.lineWidth = 0.5;
+      for (let i = 0; i <= 5; i++) {
+        const y = pad.t + (ch / 5) * i;
+        ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(w - pad.r, y); ctx.stroke();
+        // Y-axis labels
+        const val = maxBal - (maxBal / 5) * i;
+        ctx.fillStyle = '#bbb'; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
+        ctx.fillText('¥' + Math.round(val).toLocaleString(), pad.l - 8, y + 4);
+      }
+
+      // Area fill
+      ctx.beginPath();
+      ctx.moveTo(pad.l, pad.t + ch);
+      history.forEach((d, i) => {
+        const x = pad.l + (i / (history.length - 1)) * cw;
+        const y = pad.t + ch - (d.balance / maxBal) * ch;
+        ctx.lineTo(x, y);
+      });
+      ctx.lineTo(pad.l + cw, pad.t + ch);
+      ctx.closePath();
+      const grad = ctx.createLinearGradient(0, pad.t, 0, pad.t + ch);
+      grad.addColorStop(0, 'rgba(34,197,94,0.25)');
+      grad.addColorStop(1, 'rgba(34,197,94,0.02)');
+      ctx.fillStyle = grad; ctx.fill();
+
+      // Line
+      ctx.beginPath();
+      ctx.strokeStyle = '#22c55e'; ctx.lineWidth = 2.5; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      history.forEach((d, i) => {
+        const x = pad.l + (i / (history.length - 1)) * cw;
+        const y = pad.t + ch - (d.balance / maxBal) * ch;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      // Dots and labels
+      const step = Math.max(1, Math.floor(history.length / 6));
+      ctx.fillStyle = '#aaa'; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
+      for (let i = 0; i < history.length; i += step) {
+        const x = pad.l + (i / (history.length - 1)) * cw;
+        const y = pad.t + ch - (history[i].balance / maxBal) * ch;
+        // Dot
+        ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI * 2); ctx.fillStyle = '#22c55e'; ctx.fill();
+        // Month label
+        ctx.fillStyle = '#aaa';
+        ctx.fillText(history[i].month + '月', x, h - 8);
+      }
+      // Last point
+      const lastX = pad.l + cw;
+      const lastY = pad.t + ch - (history[history.length - 1].balance / maxBal) * ch;
+      ctx.beginPath(); ctx.arc(lastX, lastY, 3.5, 0, Math.PI * 2); ctx.fillStyle = '#22c55e'; ctx.fill();
+      ctx.fillStyle = '#aaa';
+      ctx.fillText(history[history.length - 1].month + '月', lastX, h - 8);
+    }
+  };
+})();
