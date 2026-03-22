@@ -1,81 +1,345 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>多重債務の返済戦略｜雪だるま方式と雪崩方式の比較 | DebtLens コラム</title>
-<meta name="description" content="複数の借入がある場合、どの順番で返済すべきか。雪だるま方式（残高が少ない順）と雪崩方式（金利が高い順）の違いを解説。">
-<link rel="canonical" href="https://yourdomain.com/columns/tasaju-saimu.html">
-<link rel="stylesheet" href="css/style.css">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"多重債務の返済戦略","author":{"@type":"Organization","name":"DebtLens"},"datePublished":"2026-03-22"}</script>
-</head>
-<body>
-<header class="site-header"><a href="../index.html"><div class="site-logo">D</div><div><div class="site-title">DebtLens</div><div class="site-tagline">数字は正直に、言葉は優しく</div></div></a></header>
-<nav class="breadcrumb"><a href="../index.html">ホーム</a> ＞ <a href="../index.html#columns">コラム</a> ＞ 多重債務の返済戦略</nav>
-<article class="content article">
-<h1>多重債務の返済戦略<br><small style="font-size:14px;color:var(--c-gray-500);font-weight:400">── 雪だるま方式と雪崩方式、どちらが有効か</small></h1>
-<div class="article-meta"><span>📅 2026年3月22日</span><span>🕐 読了目安 6分</span></div>
+/* ═══════════════════════════════════════════════
+   DebtLens — Design System
+   v3.1 明るい背景・緑アクセント・伴走系トーン
+   ═══════════════════════════════════════════════ */
 
-<p>クレジットカードのリボ、消費者金融、銀行カードローン──複数の借入がある場合、「どの借入から優先的に返すべきか」は重要な問題です。この記事では2つの代表的な返済戦略を比較します。</p>
+:root {
+  /* Green */
+  --c-green-50:  #f0fdf4;
+  --c-green-100: #dcfce7;
+  --c-green-200: #bbf7d0;
+  --c-green-500: #22c55e;
+  --c-green-600: #16a34a;
+  --c-green-700: #15803d;
+  /* Gray */
+  --c-gray-50:  #f8f9fa;
+  --c-gray-100: #f0f0f0;
+  --c-gray-200: #e9ecef;
+  --c-gray-300: #dee2e6;
+  --c-gray-400: #adb5bd;
+  --c-gray-500: #888;
+  --c-gray-600: #666;
+  --c-gray-800: #1a1a2e;
+  /* Accent */
+  --c-yellow-50:  #fffbeb;
+  --c-yellow-200: #fde68a;
+  --c-yellow-800: #92400e;
+  --c-red-50:  #fff5f5;
+  --c-red-200: #fecaca;
+  --c-red-600: #dc2626;
+  --c-blue-50:  #eff6ff;
+  --c-blue-200: #bfdbfe;
+  --c-blue-600: #2563eb;
+  --c-purple-50:  #faf5ff;
+  --c-purple-200: #e9d5ff;
+  --c-purple-600: #9333ea;
+  /* Layout */
+  --max-w: 720px;
+  --radius: 14px;
+  --radius-sm: 10px;
+  --radius-xs: 8px;
+  /* Shadow */
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+}
 
-<h2>1. 2つの返済戦略</h2>
-<div class="vs-grid">
-<div class="vs-card box-blue">
-<h3>🏔️ 雪崩方式（Avalanche）</h3>
-<p><strong>金利が高い借入から優先返済。</strong>数学的に最も利息が少なくなる方法。全借入で最低返済額を払いつつ、余剰資金を金利が最も高い借入に集中投入する。</p>
-</div>
-<div class="vs-card box-green">
-<h3>⛄ 雪だるま方式（Snowball）</h3>
-<p><strong>残高が少ない借入から優先返済。</strong>心理的なモチベーション維持に優れた方法。小さい借入を先に完済して「達成感」を得ることで返済を継続しやすくなる。</p>
-</div>
-</div>
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', system-ui, sans-serif;
+  color: var(--c-gray-800);
+  background: linear-gradient(180deg, #f6fef8 0%, #fff 30%);
+  line-height: 1.85;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+a { color: var(--c-green-600); text-decoration: none; }
+a:hover { text-decoration: underline; }
+img { max-width: 100%; height: auto; }
+button { font-family: inherit; }
 
-<h2>2. 具体例で比較</h2>
-<p>以下の3つの借入があるとします。毎月の返済可能額は合計4万円です。</p>
-<div class="table-wrap">
-<table>
-<thead><tr><th>借入先</th><th>残高</th><th>年率</th><th>最低返済額</th></tr></thead>
-<tbody>
-<tr><td>カードA</td><td>50,000円</td><td>15.0%</td><td>5,000円</td></tr>
-<tr><td>カードB</td><td>200,000円</td><td>18.0%</td><td>10,000円</td></tr>
-<tr><td>カードローンC</td><td>300,000円</td><td>14.5%</td><td>10,000円</td></tr>
-</tbody>
-</table></div>
+/* ── Site Header ── */
+.site-header {
+  max-width: var(--max-w); margin: 0 auto;
+  padding: 20px 20px 0;
+  display: flex; align-items: center; gap: 10px;
+}
+.site-header a { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
+.site-logo {
+  width: 36px; height: 36px; border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--c-green-500), var(--c-green-600));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; color: #fff; font-weight: 700;
+  flex-shrink: 0;
+}
+.site-title { font-size: 18px; font-weight: 800; letter-spacing: -0.02em; }
+.site-tagline { font-size: 11px; color: var(--c-gray-500); margin-top: -2px; }
 
-<h3>雪崩方式の場合</h3>
-<p>金利が最も高いカードB（18.0%）に余剰資金を集中します。カードAとカードローンCは最低返済額のみ支払い、残りの15,000円（4万円−5,000−10,000−10,000）をカードBに上乗せします。カードBが完済したら、その分をカードローンCに回します。</p>
-<p><strong>結果：</strong>全完済まで約19ヶ月、利息合計は約46,000円。</p>
+/* ── Breadcrumb ── */
+.breadcrumb {
+  max-width: var(--max-w); margin: 16px auto 0; padding: 0 20px;
+  font-size: 12px; color: var(--c-gray-500);
+}
+.breadcrumb a { color: var(--c-gray-500); }
+.breadcrumb a:hover { color: var(--c-green-600); }
 
-<h3>雪だるま方式の場合</h3>
-<p>残高が最も少ないカードA（50,000円）に余剰資金を集中します。カードAが完済したら、その返済分をカードBに上乗せします。</p>
-<p><strong>結果：</strong>全完済まで約20ヶ月、利息合計は約49,000円。</p>
+/* ── Main Content Area ── */
+.content { max-width: var(--max-w); margin: 20px auto 0; padding: 0 20px; }
 
-<div class="box box-gray">
-<div class="box-title">📊 比較結果</div>
-<p style="font-size:13px;margin-bottom:6px">雪崩方式のほうが利息は約3,000円少なくなります。ただし雪だるま方式ではカードAが約4ヶ月で完済でき、早い段階で「1つ返し終えた」という達成感が得られます。</p>
-<p style="font-size:13px;margin:0">利息差が小さい場合は、モチベーション維持を重視して雪だるま方式を選ぶのも合理的な判断です。</p></div>
+/* ── Tab Bar ── */
+.tab-bar {
+  max-width: var(--max-w); margin: 16px auto 0; padding: 0 16px;
+  display: flex; gap: 4px; overflow-x: auto;
+  scrollbar-width: none; -ms-overflow-style: none;
+}
+.tab-bar::-webkit-scrollbar { display: none; }
+.tab-btn {
+  padding: 8px 14px; border-radius: var(--radius-sm); border: none;
+  background: transparent; color: var(--c-gray-500);
+  font-size: 12px; font-weight: 500; cursor: pointer;
+  white-space: nowrap; transition: all 0.2s;
+  display: flex; align-items: center; gap: 4px;
+}
+.tab-btn.active {
+  background: var(--c-green-500); color: #fff; font-weight: 700;
+}
 
-<h2>3. どちらを選ぶべきか</h2>
-<p><strong>金利差が大きい場合は雪崩方式。</strong>たとえば18%のリボと5%の教育ローンが混在している場合、金利の高いリボを優先的に返すほうが大幅に利息を節約できます。</p>
-<p><strong>金利差が小さい場合は好みで選んでOK。</strong>クレジットカードのリボが複数ある場合（全て15%前後）は、金利差が小さいため、モチベーション維持を重視して雪だるま方式を選んでも利息差はわずかです。</p>
-<p><strong>完済の実感が欲しい人は雪だるま方式。</strong>「借入件数が1つ減った」という事実は、精神的に大きな支えになります。返済を途中で諦めてしまうリスクがある場合は、雪だるま方式のほうが継続しやすいでしょう。</p>
+/* ── Segmented Control ── */
+.seg-ctrl {
+  display: flex; background: var(--c-gray-100); border-radius: var(--radius-sm); padding: 3px; gap: 2px;
+}
+.seg-btn {
+  flex: 1; padding: 8px 6px; border-radius: var(--radius-xs); border: none;
+  font-size: 12px; font-weight: 400; background: transparent;
+  color: var(--c-gray-500); cursor: pointer; transition: all 0.2s; white-space: nowrap;
+}
+.seg-btn.active {
+  background: #fff; color: var(--c-gray-800); font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
 
-<h2>4. 共通して大切なこと</h2>
-<p>どちらの方式を選んでも、以下の3つが前提条件です。</p>
-<div class="box box-yellow">
-<p style="font-size:13px;margin-bottom:6px"><strong>① すべての借入で最低返済額は必ず払う。</strong>延滞は信用情報に傷がつき、長期的に不利になります。</p>
-<p style="font-size:13px;margin-bottom:6px"><strong>② 新規の借入・追加利用をしない。</strong>返しながら借りていては永遠に完済できません。</p>
-<p style="font-size:13px;margin:0"><strong>③ 余剰資金は1つの借入に集中させる。</strong>薄く分散させるより、1つに集中して早く件数を減らすのが効果的です。</p></div>
+/* ── Search Bar ── */
+.search-bar {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--c-gray-50); border-radius: var(--radius-sm);
+  padding: 8px 14px; border: 1px solid var(--c-gray-200); margin-bottom: 12px;
+}
+.search-bar input {
+  flex: 1; border: none; background: transparent;
+  font-size: 14px; outline: none; color: var(--c-gray-800); font-family: inherit;
+}
+.search-dropdown {
+  position: absolute; top: 100%; left: 0; right: 0; z-index: 100;
+  background: #fff; border-radius: 12px; box-shadow: var(--shadow-lg);
+  border: 1px solid var(--c-gray-200); margin-top: 4px; overflow: hidden;
+}
+.search-item {
+  display: flex; justify-content: space-between; align-items: center;
+  width: 100%; padding: 10px 14px; border: none; background: transparent;
+  cursor: pointer; font-size: 14px; text-align: left; color: var(--c-gray-800); font-family: inherit;
+}
+.search-item:hover { background: var(--c-gray-50); }
+.search-item + .search-item { border-top: 1px solid var(--c-gray-100); }
+.search-item .rate { font-size: 12px; color: var(--c-green-500); font-weight: 600; }
 
-<h2>5. 返済が難しいと感じたら</h2>
-<p>月々の返済額が収入の3分の1を超えている場合や、新たな借入で返済を回している場合は、1人で抱え込まず専門機関に相談することをおすすめします。</p>
-<p>各自治体の消費生活センター、日本貸金業協会の貸金業相談・紛争解決センター、法テラス（日本司法支援センター）などで無料相談が可能です。</p>
+/* ── Slider + Input ── */
+.slider-group { display: flex; flex-direction: column; gap: 6px; }
+.slider-group label { font-size: 12px; color: var(--c-gray-500); font-weight: 500; }
+.slider-group .row { display: flex; justify-content: space-between; align-items: center; }
+.slider-group input[type=range] { width: 100%; accent-color: var(--c-green-500); height: 6px; border-radius: 3px; }
+.num-input {
+  width: 80px; border: 1px solid var(--c-gray-200); border-radius: 6px;
+  padding: 4px 8px; font-size: 14px; font-weight: 600;
+  text-align: right; outline: none; color: var(--c-gray-800); font-family: inherit;
+}
+.num-input:focus { border-color: var(--c-green-500); }
 
-<div class="cta-block"><p style="font-size:14px;margin-bottom:14px;color:var(--c-gray-800)">複数の借入を一覧で管理しよう</p><a href="../index.html" class="cta-btn">DebtLens「複数借入」タブ →</a></div>
+/* ── Result Cards ── */
+.result-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+.result-card {
+  background: var(--c-gray-50); border-radius: 12px; padding: 14px 16px;
+  border: 1px solid var(--c-gray-200); flex: 1; min-width: 120px;
+}
+.result-card .label { font-size: 11px; color: var(--c-gray-500); font-weight: 500; margin-bottom: 4px; }
+.result-card .value { font-size: 20px; font-weight: 700; color: var(--c-gray-800); letter-spacing: -0.02em; }
+.result-card .sub { font-size: 11px; color: var(--c-gray-500); margin-top: 2px; }
+.result-card.accent { background: var(--c-green-50); border-color: var(--c-green-200); }
+.result-card.accent .value { color: var(--c-green-600); }
+.result-card.warn { background: var(--c-red-50); border-color: var(--c-red-200); }
+.result-card.warn .label, .result-card.warn .value { color: var(--c-red-600); }
 
-<nav class="related"><h2>関連コラム</h2><div class="related-list">
-<a href="kuriage-hensai.html" class="related-card"><div class="related-icon">🚀</div><div class="related-info"><span>繰上返済のコツ</span><small>少額でも効果がある理由</small></div></a>
-<a href="ribo-shikumi.html" class="related-card"><div class="related-icon">🔄</div><div class="related-info"><span>リボ払いの仕組み</span><small>利息構造と3つの方式を解説</small></div></a>
-</div></nav>
-</article>
-<footer class="site-footer"><nav class="footer-links"><a href="../index.html">ホーム</a><a href="../guide.html">使い方ガイド</a><a href="../glossary.html">用語集</a><a href="../privacy.html">プライバシーポリシー</a><a href="../about.html">運営者情報</a></nav><p>© 2026 DebtLens</p></footer>
-</body></html>
+/* ── Chart Container ── */
+.chart-container {
+  background: #fff; border-radius: var(--radius); padding: 16px;
+  border: 1px solid var(--c-gray-200);
+}
+.chart-container .chart-title { font-size: 12px; color: var(--c-gray-500); margin-bottom: 8px; font-weight: 500; }
+
+/* ── Box (Info/Warning/Error) ── */
+.box { border-radius: var(--radius); padding: 18px 20px; margin: 20px 0; }
+.box-title { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+.box-green  { background: var(--c-green-50);  border: 1px solid var(--c-green-100); }
+.box-yellow { background: var(--c-yellow-50); border: 1px solid var(--c-yellow-200); }
+.box-red    { background: var(--c-red-50);    border: 1px solid var(--c-red-200); }
+.box-blue   { background: var(--c-blue-50);   border: 1px solid var(--c-blue-200); }
+.box-purple { background: var(--c-purple-50); border: 1px solid var(--c-purple-200); }
+.box-gray   { background: var(--c-gray-50);   border: 1px solid var(--c-gray-200); }
+.box-green  .box-title { color: var(--c-green-600); }
+.box-yellow .box-title { color: var(--c-yellow-800); }
+.box-red    .box-title { color: var(--c-red-600); }
+.box-blue   .box-title { color: var(--c-blue-600); }
+.box-purple .box-title { color: var(--c-purple-600); }
+
+/* ── Tables ── */
+.table-wrap { overflow-x: auto; margin: 20px 0; border-radius: var(--radius); border: 1px solid var(--c-gray-200); }
+.table-wrap table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.table-wrap th {
+  background: var(--c-gray-50); padding: 10px 14px;
+  text-align: left; font-weight: 600; color: var(--c-gray-500); font-size: 12px;
+  border-bottom: 1px solid var(--c-gray-200);
+}
+.table-wrap td { padding: 10px 14px; border-bottom: 1px solid var(--c-gray-100); }
+.table-wrap tr:last-child td { border-bottom: none; }
+
+/* ── Article typography ── */
+.article h1 {
+  font-size: 24px; font-weight: 800; letter-spacing: -0.02em;
+  line-height: 1.4; margin-bottom: 8px;
+}
+.article-meta {
+  font-size: 12px; color: var(--c-gray-500); margin-bottom: 28px;
+  display: flex; gap: 16px; flex-wrap: wrap;
+}
+.article h2 {
+  font-size: 18px; font-weight: 700; margin: 36px 0 14px;
+  padding-left: 14px; border-left: 4px solid var(--c-green-500);
+}
+.article h3 { font-size: 15px; font-weight: 700; margin: 24px 0 10px; }
+.article p { margin-bottom: 16px; font-size: 15px; }
+
+/* ── TOC ── */
+.toc {
+  background: var(--c-gray-50); border: 1px solid var(--c-gray-200);
+  border-radius: var(--radius); padding: 18px 20px; margin: 20px 0;
+}
+.toc-title { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+.toc ol { padding-left: 20px; }
+.toc li { font-size: 13px; margin-bottom: 6px; }
+.toc a { color: var(--c-gray-800); }
+.toc a:hover { color: var(--c-green-600); }
+
+/* ── CTA ── */
+.cta-block {
+  background: var(--c-green-50); border: 1px solid var(--c-green-100);
+  border-radius: var(--radius); padding: 24px; text-align: center; margin: 36px 0;
+}
+.cta-block .cta-btn {
+  display: inline-block; background: var(--c-green-500); color: #fff;
+  padding: 12px 28px; border-radius: var(--radius-sm); font-weight: 700; font-size: 14px;
+  transition: background 0.2s; border: none; cursor: pointer; text-decoration: none;
+}
+.cta-block .cta-btn:hover { background: var(--c-green-600); text-decoration: none; }
+
+/* ── Related Articles ── */
+.related { margin: 40px 0 20px; }
+.related h2 { border-left: none; padding-left: 0; font-size: 16px; }
+.related-list { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+.related-card {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--c-gray-50); border: 1px solid var(--c-gray-200);
+  border-radius: 12px; padding: 14px 16px; transition: border-color 0.2s;
+}
+.related-card:hover { border-color: var(--c-green-500); text-decoration: none; }
+.related-icon { font-size: 20px; flex-shrink: 0; }
+.related-info span { font-size: 14px; font-weight: 600; color: var(--c-gray-800); display: block; }
+.related-info small { font-size: 12px; color: var(--c-gray-500); }
+
+/* ── News Widget ── */
+.news-section { margin: 40px 0 20px; }
+.news-section h2 { font-size: 14px; color: var(--c-gray-500); font-weight: 600; margin-bottom: 12px; border: none; padding: 0; }
+.news-list { display: flex; flex-direction: column; gap: 8px; }
+.news-item {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  padding: 8px 0; border-bottom: 1px solid var(--c-gray-100); font-size: 13px;
+}
+.news-item a { color: var(--c-gray-800); flex: 1; }
+.news-item a:hover { color: var(--c-green-600); }
+.news-item .source { font-size: 11px; color: var(--c-gray-400); white-space: nowrap; }
+.news-note { font-size: 11px; color: var(--c-gray-400); margin-top: 8px; }
+
+/* ── Cookie Banner ── */
+.cookie-banner {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999;
+  background: rgba(255,255,255,0.97); backdrop-filter: blur(12px);
+  border-top: 1px solid var(--c-gray-200); padding: 14px 20px;
+  display: flex; align-items: center; justify-content: center; gap: 16px;
+}
+.cookie-banner p { font-size: 12px; color: var(--c-gray-600); max-width: 500px; }
+.cookie-banner .btn-accept {
+  padding: 8px 20px; border-radius: var(--radius-xs); border: none;
+  background: var(--c-green-500); color: #fff; font-weight: 600; font-size: 12px;
+  cursor: pointer; white-space: nowrap;
+}
+.cookie-banner .btn-decline {
+  padding: 8px 16px; border-radius: var(--radius-xs);
+  border: 1px solid var(--c-gray-200); background: #fff;
+  color: var(--c-gray-600); font-size: 12px; cursor: pointer; white-space: nowrap;
+}
+
+/* ── Disclaimer Banner ── */
+.disclaimer-banner {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);
+  border-top: 1px solid var(--c-gray-200); padding: 12px 16px;
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+}
+.disclaimer-banner p { font-size: 11px; color: var(--c-gray-500); max-width: 520px; }
+
+/* ── Footer ── */
+.site-footer {
+  max-width: var(--max-w); margin: 40px auto 0; padding: 20px;
+  border-top: 1px solid var(--c-gray-100); text-align: center;
+}
+.site-footer p { font-size: 11px; color: #ccc; margin-bottom: 4px; }
+.footer-links {
+  display: flex; gap: 16px; justify-content: center; margin-bottom: 12px; flex-wrap: wrap;
+}
+.footer-links a { font-size: 12px; color: var(--c-gray-500); }
+
+/* ── Grid Helpers ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.vs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
+.vs-card { border-radius: var(--radius); padding: 18px; }
+.vs-card h3 { margin: 0 0 10px; font-size: 15px; }
+.vs-card p { font-size: 13px; margin-bottom: 0; line-height: 1.7; }
+
+/* ── Definition List (glossary) ── */
+.dl-item { border-bottom: 1px solid var(--c-gray-100); padding: 20px 0; }
+.dl-item:last-child { border-bottom: none; }
+.dl-item dt { font-size: 16px; font-weight: 700; color: var(--c-gray-800); margin-bottom: 6px; }
+.dl-item dd { font-size: 14px; color: var(--c-gray-600); line-height: 1.8; }
+
+/* ── Utility ── */
+.text-green { color: var(--c-green-600); }
+.text-red   { color: var(--c-red-600); }
+.text-muted { color: var(--c-gray-500); }
+.fw-bold    { font-weight: 700; }
+.mt-0  { margin-top: 0; }
+.mb-0  { margin-bottom: 0; }
+.mb-8  { margin-bottom: 8px; }
+.mb-16 { margin-bottom: 16px; }
+
+/* ── Animations ── */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.fade-in { animation: fadeIn 0.4s ease-out; }
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .grid-2, .vs-grid { grid-template-columns: 1fr; }
+  .grid-3 { grid-template-columns: 1fr 1fr; }
+  .article h1 { font-size: 20px; }
+  .cookie-banner, .disclaimer-banner { flex-direction: column; gap: 8px; text-align: center; }
+}

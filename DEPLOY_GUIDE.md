@@ -1,560 +1,282 @@
-/* ═══════════════════════════════════════════
-   DebtLens — app.js
-   計算エンジン・検索・タブ制御・スライダー同期
-   ═══════════════════════════════════════════ */
+# DebtLens 公開・収益化 完全ガイド
 
-'use strict';
+## 目次
 
-// ── State ──
-const state = {
-  rates: null,
-  allCompanies: [],
-  activeTab: 'ribo',
-  multiDebts: [{ id: 1, name: 'カードA', balance: 300000, monthlyPay: 10000, rate: 15.0 }],
-  nextDebtId: 2
-};
+1. [公開前チェック](#1-公開前チェック)
+2. [GitHub Pages 公開](#2-github-pages-公開)
+3. [独自ドメイン設定](#3-独自ドメイン設定)
+4. [Google Search Console](#4-google-search-console)
+5. [Google Analytics](#5-google-analytics)
+6. [AdSense 申請](#6-adsense-申請)
+7. [ASP 登録・アフィリエイト](#7-asp-登録アフィリエイト)
+8. [ニュース自動取得の有効化](#8-ニュース自動取得の有効化)
+9. [金利データ更新フロー](#9-金利データ更新フロー)
+10. [公開後チェックリスト](#10-公開後チェックリスト)
 
-// ── Init ──
-document.addEventListener('DOMContentLoaded', async () => {
-  await loadRates();
-  initTabs();
-  initSearch();
-  initSliders();
-  calculate();
-});
+---
 
-// ── Load Rates ──
-async function loadRates() {
-  try {
-    const res = await fetch('data/rates.json');
-    state.rates = await res.json();
-    const cats = state.rates.categories;
-    state.allCompanies = [
-      ...cats.consumer.companies.map(c => ({ ...c, category: cats.consumer.label })),
-      ...cats.credit.companies.map(c => ({ ...c, category: cats.credit.label })),
-      ...cats.bank.companies.map(c => ({ ...c, category: cats.bank.label }))
-    ];
-    // Check data freshness
-    const updated = new Date(state.rates.lastUpdated);
-    const now = new Date();
-    const daysDiff = Math.floor((now - updated) / (1000 * 60 * 60 * 24));
-    if (daysDiff > 90) {
-      showDataWarning(daysDiff);
-    }
-    updateLastUpdated();
-  } catch (e) {
-    console.warn('金利データの読み込みに失敗しました。デフォルト値を使用します。', e);
-  }
-}
+## 1. 公開前チェック
 
-function showDataWarning(days) {
-  const banner = document.getElementById('data-warning');
-  if (banner) {
-    banner.textContent = `⚠ 金利データの最終更新から${days}日が経過しています。最新の金利は各社公式サイトをご確認ください。`;
-    banner.style.display = 'block';
-  }
-}
+### 個人情報の差し替え（必須）
 
-function updateLastUpdated() {
-  const el = document.getElementById('data-updated');
-  if (el && state.rates) {
-    el.textContent = `金利データ最終更新: ${state.rates.lastUpdated}`;
-  }
-}
+以下のファイルにプレースホルダーがあります。**必ず差し替えてから公開してください。**
 
-// ── Tab Control ──
-function initTabs() {
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const tab = btn.dataset.tab;
-      state.activeTab = tab;
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      document.querySelectorAll('.tab-panel').forEach(p => {
-        p.style.display = p.id === `panel-${tab}` ? 'block' : 'none';
-        if (p.id === `panel-${tab}`) p.classList.add('fade-in');
-      });
-      calculate();
-    });
-  });
-}
+| ファイル | 差し替え箇所 |
+|---------|-------------|
+| `about.html` | `[あなたの名前またはハンドルネーム]`、`[メールアドレス]`、`[アカウントURL]` |
+| `privacy.html` | `[あなたの名前またはハンドルネーム]`、`[メールアドレス]` |
+| `js/consent.js` | `ca-pub-XXXXXXXXXX`（AdSense ID）、`G-XXXXXXXXXX`（GA4 ID） |
 
-// ── Spotlight Search ──
-function initSearch() {
-  document.querySelectorAll('.company-search').forEach(wrap => {
-    const input = wrap.querySelector('input');
-    const dropdown = wrap.querySelector('.search-dropdown');
-    if (!input || !dropdown) return;
+### URL の差し替え
 
-    input.addEventListener('input', () => {
-      const q = input.value.toLowerCase();
-      if (!q) { dropdown.style.display = 'none'; return; }
-      const results = state.allCompanies.filter(c => c.name.toLowerCase().includes(q)).slice(0, 8);
-      if (results.length === 0) { dropdown.style.display = 'none'; return; }
-      dropdown.innerHTML = results.map(c =>
-        `<button class="search-item" data-rate="${c.rate}" data-name="${c.name}">
-          <span>${c.name} <small style="color:var(--c-gray-400)">${c.category}</small></span>
-          <span class="rate">年率 ${c.rate}%</span>
-        </button>`
-      ).join('');
-      dropdown.style.display = 'block';
-      dropdown.querySelectorAll('.search-item').forEach(item => {
-        item.addEventListener('click', () => {
-          const rate = parseFloat(item.dataset.rate);
-          input.value = item.dataset.name;
-          dropdown.style.display = 'none';
-          // Set the rate input in the same panel
-          const panel = wrap.closest('.tab-panel');
-          const rateInput = panel?.querySelector('[data-field="rate"]');
-          const rateSlider = panel?.querySelector('[data-slider="rate"]');
-          if (rateInput) { rateInput.value = rate; }
-          if (rateSlider) { rateSlider.value = rate; }
-          calculate();
-        });
-      });
-    });
+以下のファイルで `yourdomain.com` を独自ドメインに変更してください。
 
-    input.addEventListener('focus', () => { if (input.value) input.dispatchEvent(new Event('input')); });
-    document.addEventListener('click', (e) => {
-      if (!wrap.contains(e.target)) dropdown.style.display = 'none';
-    });
-  });
-}
+- 全 HTML ファイルの `<link rel="canonical">`
+- `sitemap.xml` の全 `<loc>`
+- `robots.txt` の `Sitemap:`
 
-// ── Slider Sync ──
-function initSliders() {
-  document.querySelectorAll('[data-slider]').forEach(slider => {
-    const field = slider.dataset.slider;
-    const panel = slider.closest('.tab-panel') || document;
-    const input = panel.querySelector(`[data-field="${field}"]`);
-    if (!input) return;
+### ローカル確認
 
-    slider.addEventListener('input', () => { input.value = slider.value; calculate(); });
-    input.addEventListener('input', () => {
-      const v = Math.min(parseFloat(slider.max), Math.max(parseFloat(slider.min), parseFloat(input.value) || 0));
-      slider.value = v;
-      calculate();
-    });
-  });
-}
+```bash
+# Node.js がある場合
+npx serve .
 
-// ── Calculation Engine ──
-function calcRiboGanriTeigaku(balance, monthlyPay, annualRate, startDate) {
-  const mr = annualRate / 100 / 12;
-  let b = balance;
-  const history = [{ month: 0, balance: b, interest: 0, principal: 0 }];
-  let totalInterest = 0, month = 0;
-  if (monthlyPay <= b * mr) return { history, totalInterest, months: Infinity, error: '月々の返済額が利息以下です' };
-  while (b > 0 && month < 1200) {
-    month++;
-    const interest = Math.round(b * mr);
-    const principal = Math.min(b, monthlyPay - interest);
-    b = Math.max(0, b - principal);
-    totalInterest += interest;
-    history.push({ month, balance: b, interest, principal });
-    if (b <= 0) break;
-  }
-  return { history, totalInterest, months: month };
-}
+# Python がある場合
+python -m http.server 8000
 
-function calcRiboGankinTeigaku(balance, monthlyPrincipal, annualRate) {
-  const mr = annualRate / 100 / 12;
-  let b = balance;
-  const history = [{ month: 0, balance: b, interest: 0, principal: 0, payment: 0 }];
-  let totalInterest = 0, month = 0;
-  while (b > 0 && month < 1200) {
-    month++;
-    const interest = Math.round(b * mr);
-    const principal = Math.min(b, monthlyPrincipal);
-    b = Math.max(0, b - principal);
-    totalInterest += interest;
-    history.push({ month, balance: b, interest, principal, payment: principal + interest });
-    if (b <= 0) break;
-  }
-  return { history, totalInterest, months: month };
-}
+# VS Code の場合
+# Live Server 拡張機能を使用
+```
 
-function calcRiboZandakaSlide(balance, annualRate) {
-  const mr = annualRate / 100 / 12;
-  let b = balance;
-  const history = [{ month: 0, balance: b, interest: 0, principal: 0, payment: 0 }];
-  let totalInterest = 0, month = 0;
-  const getMin = (bal) => {
-    if (bal <= 100000) return 5000;
-    if (bal <= 200000) return 10000;
-    if (bal <= 300000) return 15000;
-    if (bal <= 500000) return 20000;
-    if (bal <= 1000000) return 30000;
-    return 50000;
-  };
-  while (b > 0 && month < 1200) {
-    month++;
-    const interest = Math.round(b * mr);
-    const payment = Math.max(getMin(b), interest + 1000);
-    const principal = Math.min(b, payment - interest);
-    b = Math.max(0, b - principal);
-    totalInterest += interest;
-    history.push({ month, balance: b, interest, principal, payment });
-    if (b <= 0) break;
-  }
-  return { history, totalInterest, months: month };
-}
+ブラウザで `http://localhost:8000` を開き、以下を確認：
 
-function calcInstallment(amount, n, annualRate) {
-  const mr = annualRate / 100 / 12;
-  const mp = n <= 1 ? amount : Math.round((amount * mr * Math.pow(1 + mr, n)) / (Math.pow(1 + mr, n) - 1));
-  return { monthlyPay: mp, totalPay: mp * n, totalFee: mp * n - amount, installments: n };
-}
+- [ ] 5タブすべての計算が動作する
+- [ ] 会社名検索で金利が自動入力される
+- [ ] スライダーと数値入力が同期する
+- [ ] 全ページのリンクが正しく遷移する
+- [ ] モバイル表示が崩れていない
+- [ ] Cookie同意バナーが表示される
 
-function calcReverse(balance, annualRate, targetMonths) {
-  const mr = annualRate / 100 / 12;
-  if (targetMonths <= 0) return 0;
-  if (mr === 0) return Math.ceil(balance / targetMonths);
-  return Math.ceil((balance * mr * Math.pow(1 + mr, targetMonths)) / (Math.pow(1 + mr, targetMonths) - 1));
-}
+---
 
-// ── Main Calculate ──
-function calculate() {
-  switch (state.activeTab) {
-    case 'ribo': calcRiboPanel(); break;
-    case 'installment': calcInstallmentPanel(); break;
-    case 'compare': calcComparePanel(); break;
-    case 'bnpl': calcBNPLPanel(); break;
-    case 'multi': calcMultiPanel(); break;
-  }
-}
+## 2. GitHub Pages 公開
 
-function getVal(sel, panel) {
-  const root = panel ? document.getElementById(`panel-${panel}`) : document;
-  const el = root?.querySelector(sel);
-  return el ? parseFloat(el.value) || 0 : 0;
-}
+### 手順
 
-function setText(sel, text, panel) {
-  const root = panel ? document.getElementById(`panel-${panel}`) : document;
-  const el = root?.querySelector(sel);
-  if (el) el.textContent = text;
-}
+1. GitHub で新しいリポジトリを作成（例: `debtlens`）
+2. リポジトリ設定で **Public** を選択
+3. 全ファイルをアップロード（ドラッグ&ドロップ or git push）
+4. Settings → Pages → Source: `Deploy from a branch`
+5. Branch: `main` / `/ (root)` を選択 → Save
+6. 数分待つと `https://ユーザー名.github.io/debtlens/` で公開される
 
-function setHTML(sel, html, panel) {
-  const root = panel ? document.getElementById(`panel-${panel}`) : document;
-  const el = root?.querySelector(sel);
-  if (el) el.innerHTML = html;
-}
+### git でアップロードする場合
 
-// ── Panel Calculations ──
-function calcRiboPanel() {
-  const p = 'ribo';
-  const balance = getVal('[data-field="balance"]', p);
-  const monthly = getVal('[data-field="monthly"]', p);
-  const rate = getVal('[data-field="rate"]', p);
-  const method = document.querySelector('#panel-ribo .seg-btn.active')?.dataset.method || 'ganri';
-  const startMonth = document.querySelector('#panel-ribo [data-field="start-date"]')?.value || '';
+```bash
+cd debtlens
+git init
+git add .
+git commit -m "Initial release"
+git remote add origin https://github.com/ユーザー名/debtlens.git
+git branch -M main
+git push -u origin main
+```
 
-  let result;
-  if (method === 'ganri') result = calcRiboGanriTeigaku(balance, monthly, rate);
-  else if (method === 'gankin') result = calcRiboGankinTeigaku(balance, monthly, rate);
-  else result = calcRiboZandakaSlide(balance, rate);
+---
 
-  if (result.error) {
-    setHTML('.ribo-results', `
-      <div class="box box-red"><div class="box-title">⚠ ${result.error}</div>
-      <p style="font-size:13px;color:var(--c-gray-500);margin:0">月々の返済額を増やしてください。利息だけで残高が減りません。</p></div>
-    `, p);
-    return;
-  }
+## 3. 独自ドメイン設定
 
-  let completionStr = '';
-  if (startMonth) {
-    const d = new Date(startMonth + '-01');
-    d.setMonth(d.getMonth() + result.months);
-    completionStr = `${d.getFullYear()}年${d.getMonth() + 1}月 完済予定`;
-  }
+### ドメイン取得
 
-  const warnClass = result.totalInterest > balance * 0.5 ? 'warn' : '';
+おすすめのドメインレジストラ：
+- Google Domains（安定・管理しやすい）
+- Cloudflare Registrar（原価提供で安い）
+- ムームードメイン（日本語対応）
 
-  setHTML('.ribo-results', `
-    <div class="result-grid mb-16">
-      <div class="result-card accent">
-        <div class="label">完済までの期間</div>
-        <div class="value">${result.months}ヶ月</div>
-        ${completionStr ? `<div class="sub">${completionStr}</div>` : ''}
-      </div>
-      <div class="result-card ${warnClass}">
-        <div class="label">利息の合計</div>
-        <div class="value">¥${result.totalInterest.toLocaleString()}</div>
-      </div>
-      <div class="result-card">
-        <div class="label">総支払額</div>
-        <div class="value">¥${(balance + result.totalInterest).toLocaleString()}</div>
-      </div>
-    </div>
-    <div class="chart-container">
-      <div class="chart-title">残高推移</div>
-      <canvas id="ribo-chart" height="200"></canvas>
-    </div>
-  `, p);
+`.com` や `.jp` が理想。年間1,000〜3,000円程度。
 
-  drawBalanceChart('ribo-chart', result.history);
-}
+### DNS 設定
 
-function calcInstallmentPanel() {
-  const p = 'installment';
-  const amount = getVal('[data-field="amount"]', p);
-  const rate = getVal('[data-field="rate"]', p);
-  const plans = [3, 6, 10, 12, 15, 18, 20, 24, 36].map(n => calcInstallment(amount, n, rate));
+GitHub Pages のIPアドレスを A レコードに設定：
 
-  let rows = plans.map(pl => `
-    <tr>
-      <td style="font-weight:600">${pl.installments}回</td>
-      <td style="text-align:right">¥${pl.monthlyPay.toLocaleString()}</td>
-      <td style="text-align:right;color:${pl.totalFee > amount * 0.2 ? 'var(--c-red-600)' : 'var(--c-gray-500)'}">¥${pl.totalFee.toLocaleString()}</td>
-      <td style="text-align:right;font-weight:500">¥${pl.totalPay.toLocaleString()}</td>
-    </tr>
-  `).join('');
+```
+185.199.108.153
+185.199.109.153
+185.199.110.153
+185.199.111.153
+```
 
-  setHTML('.installment-results', `
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>回数</th><th style="text-align:right">月々の支払い</th><th style="text-align:right">手数料合計</th><th style="text-align:right">総支払額</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>
-  `, p);
-}
+CNAME レコード（www サブドメイン）：
+```
+www → ユーザー名.github.io
+```
 
-function calcComparePanel() {
-  const p = 'compare';
-  const amount = getVal('[data-field="amount"]', p);
-  const riboMonthly = getVal('[data-field="ribo-monthly"]', p);
-  const installments = getVal('[data-field="installments"]', p);
-  const rate = getVal('[data-field="rate"]', p);
+### GitHub 側の設定
 
-  const ribo = calcRiboGanriTeigaku(amount, riboMonthly, rate);
-  const inst = calcInstallment(amount, installments, rate);
+1. リポジトリのルートに `CNAME` ファイルを作成
+   ```
+   yourdomain.com
+   ```
+2. Settings → Pages → Custom domain に `yourdomain.com` を入力
+3. 「Enforce HTTPS」にチェック（DNS 反映後に有効化）
 
-  const riboHTML = ribo.error
-    ? `<div style="color:var(--c-red-600);font-size:12px">⚠ ${ribo.error}</div>`
-    : `<div class="text-muted" style="font-size:11px">完済期間</div>
-       <div style="font-size:18px;font-weight:700">${ribo.months}ヶ月</div>
-       <div class="text-muted" style="font-size:11px;margin-top:8px">利息合計</div>
-       <div style="font-size:16px;font-weight:700;color:${ribo.totalInterest > inst.totalFee ? 'var(--c-red-600)' : 'var(--c-green-600)'}">¥${ribo.totalInterest.toLocaleString()}</div>
-       <div class="text-muted" style="font-size:11px;margin-top:8px">総支払額</div>
-       <div style="font-size:14px;font-weight:600">¥${(amount + ribo.totalInterest).toLocaleString()}</div>`;
+DNS 反映には最大48時間かかることがあります。
 
-  const diff = ribo.error ? 0 : Math.abs(ribo.totalInterest - inst.totalFee);
-  const diffText = ribo.error ? '' : (ribo.totalInterest > inst.totalFee
-    ? 'この条件では分割払いのほうが手数料が少なくなります'
-    : 'この条件ではリボ払いのほうが利息が少なくなります');
+---
 
-  setHTML('.compare-results', `
-    <div class="vs-grid">
-      <div style="background:#fff;border-radius:var(--radius);padding:16px;border:1px solid var(--c-gray-200)">
-        <div style="font-size:13px;font-weight:700;margin-bottom:12px">🔄 リボ払い</div>${riboHTML}
-      </div>
-      <div style="background:#fff;border-radius:var(--radius);padding:16px;border:1px solid var(--c-gray-200)">
-        <div style="font-size:13px;font-weight:700;margin-bottom:12px">📅 分割払い</div>
-        <div class="text-muted" style="font-size:11px">支払回数</div>
-        <div style="font-size:18px;font-weight:700">${installments}回</div>
-        <div class="text-muted" style="font-size:11px;margin-top:8px">手数料合計</div>
-        <div style="font-size:16px;font-weight:700;color:${!ribo.error && inst.totalFee > ribo.totalInterest ? 'var(--c-red-600)' : 'var(--c-green-600)'}">¥${inst.totalFee.toLocaleString()}</div>
-        <div class="text-muted" style="font-size:11px;margin-top:8px">総支払額</div>
-        <div style="font-size:14px;font-weight:600">¥${inst.totalPay.toLocaleString()}</div>
-      </div>
-    </div>
-    ${!ribo.error ? `<div class="box box-gray">
-      <div style="font-size:12px;font-weight:600;margin-bottom:4px">計算上の差額</div>
-      <div style="font-size:18px;font-weight:700;color:var(--c-green-500)">¥${diff.toLocaleString()}</div>
-      <div style="font-size:11px;color:var(--c-gray-500);margin-top:4px">${diffText}</div>
-    </div>` : ''}
-  `, p);
-}
+## 4. Google Search Console
 
-function calcBNPLPanel() {
-  const p = 'bnpl';
-  const amount = getVal('[data-field="amount"]', p);
-  const service = document.querySelector('#panel-bnpl .seg-btn.active')?.dataset.service || 'paidy6';
+1. [Google Search Console](https://search.google.com/search-console/) にアクセス
+2. 「プロパティを追加」→ ドメインまたは URL プレフィックスを選択
+3. 所有権を確認（DNS TXT レコード or HTML ファイルアップロード）
+4. サイトマップを送信：`https://yourdomain.com/sitemap.xml`
+5. 「URL 検査」で主要ページのインデックス登録をリクエスト
 
-  let html = '';
-  if (service === 'paidy6' || service === 'paidy12') {
-    const months = service === 'paidy6' ? 6 : 12;
-    const mFee = Math.round(amount * 0.035);
-    const tFee = mFee * months;
-    const mp = Math.round(amount / months) + mFee;
-    html = `
-      <div class="result-grid mb-16">
-        <div class="result-card"><div class="label">支払い期間</div><div class="value">${months}ヶ月</div></div>
-        <div class="result-card ${tFee > amount * 0.2 ? 'warn' : ''}"><div class="label">手数料合計</div><div class="value">¥${tFee.toLocaleString()}</div></div>
-        <div class="result-card"><div class="label">総支払額</div><div class="value">¥${(amount + tFee).toLocaleString()}</div></div>
-      </div>
-      <div class="box box-yellow">
-        <div class="box-title">Paidy手数料の構造</div>
-        <p style="font-size:13px;margin:0">月あたり手数料: ¥${mFee.toLocaleString()}（元金の3.5%/月）<br>
-        単純年換算: 約42%（参考値。分割手数料のため実質年率とは異なります）</p>
-      </div>`;
-  } else if (service === 'paidy1') {
-    html = `
-      <div class="result-grid">
-        <div class="result-card accent"><div class="label">支払い期間</div><div class="value">翌月</div></div>
-        <div class="result-card accent"><div class="label">手数料</div><div class="value">¥0</div></div>
-        <div class="result-card"><div class="label">総支払額</div><div class="value">¥${amount.toLocaleString()}</div></div>
-      </div>
-      <div class="box box-green"><div class="box-title">💡 翌月一括は手数料無料</div>
-      <p style="font-size:13px;margin:0">支払えるなら翌月一括がもっともお得です。</p></div>`;
-  } else {
-    const mp = Math.max(1000, Math.round(amount / 24));
-    const r = calcRiboGanriTeigaku(amount, mp, 15.0);
-    html = `
-      <div class="result-grid mb-16">
-        <div class="result-card"><div class="label">月額設定</div><div class="value">¥${mp.toLocaleString()}</div></div>
-        <div class="result-card"><div class="label">完済期間</div><div class="value">${r.months}ヶ月</div></div>
-        <div class="result-card ${r.totalInterest > amount * 0.2 ? 'warn' : ''}"><div class="label">利息合計</div><div class="value">¥${r.totalInterest.toLocaleString()}</div></div>
-      </div>
-      <div class="box box-red"><div class="box-title">⚠ メルペイ定額払い = リボ払い</div>
-      <p style="font-size:13px;margin:0">年率15.0%のリボルビング方式です。月額設定を上げると利息を抑えられます。</p></div>`;
-  }
-  setHTML('.bnpl-results', html, p);
-}
+### 優先的にインデックスリクエストするページ
 
-function calcMultiPanel() {
-  const container = document.getElementById('multi-debts');
-  if (!container) return;
+1. `index.html`（トップ）
+2. `glossary.html`（用語集）
+3. `columns/ribo-shikumi.html`（リボの仕組み）
+4. `columns/bnpl-chuiten.html`（BNPL注意点）
 
-  let totalBal = 0, totalMon = 0, totalInt = 0, maxMon = 0;
-  state.multiDebts.forEach(d => {
-    const r = calcRiboGanriTeigaku(d.balance, d.monthlyPay, d.rate);
-    totalBal += d.balance;
-    totalMon += d.monthlyPay;
-    if (!r.error) { totalInt += r.totalInterest; maxMon = Math.max(maxMon, r.months); }
-  });
+---
 
-  setText('.multi-total-balance', `¥${totalBal.toLocaleString()}`, 'multi');
-  setText('.multi-total-monthly', `¥${totalMon.toLocaleString()}`, 'multi');
-  setText('.multi-total-interest', `¥${totalInt.toLocaleString()}`, 'multi');
-  setText('.multi-total-months', `${maxMon}ヶ月`, 'multi');
-}
+## 5. Google Analytics
 
-// ── SVG Balance Chart (Canvas fallback) ──
-function drawBalanceChart(canvasId, history) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const w = canvas.parentElement.clientWidth - 32;
-  const h = 180;
-  canvas.width = w * 2; canvas.height = h * 2;
-  canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
-  ctx.scale(2, 2);
+1. [Google Analytics](https://analytics.google.com/) で GA4 プロパティを作成
+2. 測定 ID（`G-XXXXXXXXXX`）を取得
+3. `js/consent.js` の `GA_ID` を差し替え
+4. Cookie 同意バナーで「同意する」を選んだユーザーのみトラッキングが有効化される
 
-  const maxBal = history[0].balance;
-  const pad = { t: 10, r: 10, b: 30, l: 50 };
-  const cw = w - pad.l - pad.r;
-  const ch = h - pad.t - pad.b;
+### 確認すべき指標
 
-  // Grid
-  ctx.strokeStyle = '#f0f0f0'; ctx.lineWidth = 0.5;
-  for (let i = 0; i <= 4; i++) {
-    const y = pad.t + (ch / 4) * i;
-    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(w - pad.r, y); ctx.stroke();
-  }
+- ページビュー（どのタブ・コラムが人気か）
+- 直帰率（計算ツールが使われているか）
+- 流入元（検索 or SNS or 直接）
+- デバイス比率（モバイル vs PC）
 
-  // Area
-  ctx.beginPath();
-  ctx.moveTo(pad.l, pad.t + ch);
-  history.forEach((d, i) => {
-    const x = pad.l + (i / (history.length - 1)) * cw;
-    const y = pad.t + ch - (d.balance / maxBal) * ch;
-    ctx.lineTo(x, y);
-  });
-  ctx.lineTo(pad.l + cw, pad.t + ch);
-  ctx.closePath();
-  const grad = ctx.createLinearGradient(0, pad.t, 0, pad.t + ch);
-  grad.addColorStop(0, 'rgba(34,197,94,0.25)');
-  grad.addColorStop(1, 'rgba(34,197,94,0.02)');
-  ctx.fillStyle = grad; ctx.fill();
+---
 
-  // Line
-  ctx.beginPath();
-  ctx.strokeStyle = '#22c55e'; ctx.lineWidth = 2; ctx.lineJoin = 'round';
-  history.forEach((d, i) => {
-    const x = pad.l + (i / (history.length - 1)) * cw;
-    const y = pad.t + ch - (d.balance / maxBal) * ch;
-    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-  });
-  ctx.stroke();
+## 6. AdSense 申請
 
-  // Labels
-  ctx.fillStyle = '#aaa'; ctx.font = '10px system-ui';
-  ctx.textAlign = 'right';
-  ctx.fillText(`¥${maxBal.toLocaleString()}`, pad.l - 4, pad.t + 10);
-  ctx.fillText('¥0', pad.l - 4, pad.t + ch + 4);
-  ctx.textAlign = 'center';
-  const step = Math.max(1, Math.floor(history.length / 5));
-  for (let i = 0; i < history.length; i += step) {
-    const x = pad.l + (i / (history.length - 1)) * cw;
-    ctx.fillText(`${history[i].month}月`, x, h - 6);
-  }
-  const lastX = pad.l + cw;
-  ctx.fillText(`${history[history.length - 1].month}月`, lastX, h - 6);
-}
+### 申請タイミング
 
-// ── Multi Debt Management ──
-function addDebt() {
-  state.multiDebts.push({ id: state.nextDebtId++, name: `借入${state.multiDebts.length + 1}`, balance: 100000, monthlyPay: 5000, rate: 15.0 });
-  renderMultiDebts();
-  calcMultiPanel();
-}
+公開から **2週間後** を推奨。理由：
+- Search Console にインデックスが反映される
+- ある程度のページビューが蓄積される
+- Google がサイトの品質を評価できる
 
-function removeDebt(id) {
-  if (state.multiDebts.length <= 1) return;
-  state.multiDebts = state.multiDebts.filter(d => d.id !== id);
-  renderMultiDebts();
-  calcMultiPanel();
-}
+### 審査通過のポイント
 
-function updateDebt(id, field, value) {
-  const d = state.multiDebts.find(d => d.id === id);
-  if (d) { d[field] = typeof value === 'string' ? value : parseFloat(value) || 0; }
-  calcMultiPanel();
-}
+DebtLens は以下の審査要件を満たす設計です：
 
-function renderMultiDebts() {
-  const container = document.getElementById('multi-debts');
-  if (!container) return;
-  container.innerHTML = state.multiDebts.map(d => {
-    const r = calcRiboGanriTeigaku(d.balance, d.monthlyPay, d.rate);
-    const info = r.error
-      ? `<span style="color:var(--c-red-600);font-size:12px">⚠ ${r.error}</span>`
-      : `<span class="text-muted" style="font-size:12px">完済: <strong>${r.months}ヶ月</strong> ／ 利息: <strong class="text-red">¥${r.totalInterest.toLocaleString()}</strong></span>`;
-    return `
-      <div class="debt-card" style="background:#fff;border-radius:var(--radius);padding:14px;border:1px solid var(--c-gray-200);margin-bottom:10px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-          <input value="${d.name}" onchange="updateDebt(${d.id},'name',this.value)" style="font-size:14px;font-weight:600;border:none;background:transparent;outline:none;color:var(--c-gray-800)">
-          ${state.multiDebts.length > 1 ? `<button onclick="removeDebt(${d.id})" style="background:none;border:none;cursor:pointer;font-size:16px;color:#ccc">✕</button>` : ''}
-        </div>
-        <div class="grid-3">
-          <div><label style="font-size:11px;color:var(--c-gray-500)">残高</label>
-            <input type="number" value="${d.balance}" step="10000" oninput="updateDebt(${d.id},'balance',this.value)" class="num-input" style="width:100%;text-align:left;margin-top:4px"></div>
-          <div><label style="font-size:11px;color:var(--c-gray-500)">月額返済</label>
-            <input type="number" value="${d.monthlyPay}" step="1000" oninput="updateDebt(${d.id},'monthlyPay',this.value)" class="num-input" style="width:100%;text-align:left;margin-top:4px"></div>
-          <div><label style="font-size:11px;color:var(--c-gray-500)">年率(%)</label>
-            <input type="number" value="${d.rate}" step="0.1" oninput="updateDebt(${d.id},'rate',this.value)" class="num-input" style="width:100%;text-align:left;margin-top:4px"></div>
-        </div>
-        <div style="margin-top:10px">${info}</div>
-      </div>`;
-  }).join('');
-}
+- [x] プライバシーポリシー（`privacy.html`）
+- [x] 運営者情報（`about.html`）
+- [x] オリジナルコンテンツ（コラム6本＋用語集＋ガイド＋シミュレーション例）
+- [x] 合計オリジナルテキスト量：約 45,000字以上
+- [x] サイトナビゲーション（全ページ相互リンク）
+- [x] モバイル対応（レスポンシブデザイン）
 
-// ── Reverse Calc ──
-function toggleReverse() {
-  const el = document.getElementById('reverse-section');
-  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
-}
+### 申請手順
 
-function calcReversePay() {
-  const balance = getVal('[data-field="balance"]', 'ribo');
-  const rate = getVal('[data-field="rate"]', 'ribo');
-  const target = getVal('#reverse-months', null) || 24;
-  const pay = calcReverse(balance, rate, target);
-  const el = document.getElementById('reverse-result');
-  if (el) el.textContent = `必要な月額返済: ¥${pay.toLocaleString()}`;
-}
+1. [Google AdSense](https://www.google.com/adsense/) にアクセス
+2. サイトの URL を登録
+3. AdSense コード（`ca-pub-XXXXXXXXXX`）を取得
+4. `js/consent.js` の `ADSENSE_ID` を差し替え
+5. 審査完了を待つ（通常1〜2週間）
+
+---
+
+## 7. ASP 登録・アフィリエイト
+
+### 登録するASP
+
+| ASP | URL | 特徴 |
+|-----|-----|------|
+| A8.net | https://www.a8.net/ | 案件数最多、審査なし |
+| バリューコマース | https://www.valuecommerce.ne.jp/ | Yahoo!系案件に強い |
+
+### 案件選定方針
+
+**初期は「FP無料相談」「家計見直し」系の案件を推奨。**
+
+債務整理系の案件は弁護士法72条（非弁行為の禁止）との関係で注意が必要なため、当面は回避してください。
+
+### CTA の設置
+
+1. ASP で案件を検索 → 提携申請
+2. アフィリエイトリンクを取得
+3. 各ページの CTA ブロックのリンクを差し替え
+4. CTA の上に「【広告】」表記を追加
+5. リンクに `rel="sponsored"` を設定
+
+---
+
+## 8. ニュース自動取得の有効化
+
+### 初回実行
+
+1. GitHub リポジトリの Actions タブを開く
+2. 「Fetch Financial News」ワークフローを選択
+3. 「Run workflow」で手動実行
+4. `data/news.json` が生成されることを確認
+
+### 自動実行
+
+`fetch-news.yml` により毎日 9:00 JST（0:00 UTC）に自動実行されます。
+GitHub Actions の無料枠（月2,000分）で十分収まります。
+
+---
+
+## 9. 金利データ更新フロー
+
+### 自動リマインダー
+
+`rate-reminder.yml` により毎月1日に GitHub Issue が自動作成されます。
+Issue には50社の公式サイト URL とチェックリストが含まれています。
+
+### 更新手順
+
+1. Issue のチェックリストに従って各社の公式サイトを確認
+2. 変更があった場合は `data/rates.json` を更新
+3. `lastUpdated` の日付を更新
+4. コミット&プッシュ
+
+### 90日警告
+
+`js/app.js` が `data/rates.json` の `lastUpdated` をチェックし、90日以上経過している場合はページ上部に警告バナーを表示します。
+
+---
+
+## 10. 公開後チェックリスト
+
+### 即時（公開直後）
+
+- [ ] サイトが正常に表示される
+- [ ] HTTPS が有効になっている
+- [ ] 全ページのリンクが動作する
+- [ ] モバイルで表示を確認
+
+### 1週間後
+
+- [ ] Search Console でインデックス状況を確認
+- [ ] エラーページがないことを確認
+- [ ] X（Twitter）で公開告知
+
+### 2週間後
+
+- [ ] AdSense 申請
+- [ ] Analytics でアクセス状況を確認
+
+### 1ヶ月後
+
+- [ ] ASP 登録・案件提携
+- [ ] CTA リンク差し替え
+- [ ] 金利データ更新チェック（Issue 確認）
+
+### 3ヶ月後
+
+- [ ] Analytics 分析 → 人気ページの特定
+- [ ] SEO 記事追加検討
+- [ ] AdSense 収益確認
+- [ ] アフィリエイト成果確認
