@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initTabs();
   initSearch();
   initSliders();
+  initAppleDatePicker();
   calculate();
 });
 
@@ -692,3 +693,43 @@ function selectCompanyFromDropdown(nameSelect) {
     }
   };
 })();
+
+// ── Apple Date Picker Init ──
+function initAppleDatePicker() {
+  const yearSelect = document.getElementById('start-year');
+  const monthSelect = document.getElementById('start-month');
+  if (!yearSelect || !monthSelect) return;
+
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+
+  // Populate years (current year to +10)
+  yearSelect.innerHTML = '';
+  for (let y = currentYear; y <= currentYear + 10; y++) {
+    const opt = document.createElement('option');
+    opt.value = y;
+    opt.textContent = y;
+    if (y === currentYear) opt.selected = true;
+    yearSelect.appendChild(opt);
+  }
+
+  // Set current month
+  monthSelect.value = String(currentMonth).padStart(2, '0');
+
+  // Set hidden field
+  updateStartDate();
+}
+
+function updateStartDate() {
+  const yearSelect = document.getElementById('start-year');
+  const monthSelect = document.getElementById('start-month');
+  if (!yearSelect || !monthSelect) return;
+
+  const val = yearSelect.value + '-' + monthSelect.value;
+  const hidden = document.querySelector('#panel-ribo [data-field="start-date"]');
+  if (hidden) hidden.value = val;
+  calculate();
+}
+
+
